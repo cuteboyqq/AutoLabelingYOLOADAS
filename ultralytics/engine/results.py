@@ -15,7 +15,7 @@ import cv2
 
 from ultralytics.data.augment import LetterBox
 from ultralytics.utils import LOGGER, SimpleClass, ops
-from ultralytics.utils.plotting import Annotator, colors, save_one_box, cls_to_color
+from ultralytics.utils.plotting import Annotator, colors, save_one_box, cls_to_color, Convert_labels_and_save, map_segment_labels
 from ultralytics.utils.torch_utils import smart_inference_mode
 
 import os
@@ -294,56 +294,62 @@ class Results(SimpleClass):
             os.makedirs(save_lane_colormaps_dir,exist_ok=True)
             os.makedirs(save_lane_masks_dir,exist_ok=True)
 
-        save_im_width = 1280
-        save_im_height = 720
-        im_file = self.path.split(os.sep)[-1]
-        im_name = im_file.split(".")[0]
-        map_file = im_name + ".png"
-        save_drivable_colormaps_path = os.path.join(save_drivable_colormaps_dir,map_file)
-        save_drivable_masks_path = os.path.join(save_drivable_masks_dir,map_file)
-        save_lane_colormaps_path = os.path.join(save_lane_colormaps_dir,map_file)
-        save_lane_masks_path = os.path.join(save_lane_masks_dir,map_file)
+            save_im_width = 1280
+            save_im_height = 720
+            im_file = self.path.split(os.sep)[-1]
+            im_name = im_file.split(".")[0]
+            map_file = im_name + ".png"
+            save_drivable_colormaps_path = os.path.join(save_drivable_colormaps_dir,map_file)
+            save_drivable_masks_path = os.path.join(save_drivable_masks_dir,map_file)
+            save_lane_colormaps_path = os.path.join(save_lane_colormaps_dir,map_file)
+            save_lane_masks_path = os.path.join(save_lane_masks_dir,map_file)
         # Plot ADAS Segmentation results
         img = annotator.result()
         if SAVE_RESULT_MAP:
             img = cv2.resize(img, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)
 
         if self.drive_map is not None:
-            self.drive_map = np.squeeze(self.drive_map.detach().cpu().numpy())
+            self.drive_map_ = np.squeeze(self.drive_map.detach().cpu().numpy())
+            self.drive_colormap = np.squeeze(self.drive_map.detach().cpu().numpy())
             # self.drive_raw = cls_to_color(self.drive_map, 'drive')
             if SAVE_RESULT_MAP:
-                self.drive_map = cv2.resize(self.drive_map, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)
+                self.drive_map_ = cv2.resize(self.drive_map_, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST) 
+                self.drive_colormap = cv2.resize(self.drive_colormap, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)      
+                Convert_labels_and_save(self.drive_map_,save_drivable_masks_path,type="drivable")
             else:
-                self.drive_map = cv2.resize(self.drive_map, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+                self.drive_map_ = cv2.resize(self.drive_map_, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
             
+            # if SAVE_RESULT_MAP:
+            #     cv2.imwrite(save_drivable_masks_path,self.drive_map)
+            self.drive_colormap = cls_to_color(self.drive_colormap, 'drive')
             if SAVE_RESULT_MAP:
-                cv2.imwrite(save_drivable_masks_path,self.drive_map)
-            self.drive_map = cls_to_color(self.drive_map, 'drive')
-            if SAVE_RESULT_MAP:
-                cv2.imwrite(save_drivable_colormaps_path,self.drive_map)
+                cv2.imwrite(save_drivable_colormaps_path,self.drive_colormap)
 
-            img[self.drive_map != 0] = img[self.drive_map != 0] * 0.5 + self.drive_map[self.drive_map != 0] * 0.5
+            img[self.drive_colormap != 0] = img[self.drive_colormap != 0] * 0.5 + self.drive_colormap[self.drive_colormap != 0] * 0.5
         if self.lane_map is not None:
-            self.lane_map = np.squeeze(self.lane_map.detach().cpu().numpy())
+            self.lane_map_ = np.squeeze(self.lane_map.detach().cpu().numpy())
+            self.lane_colormap = np.squeeze(self.lane_map.detach().cpu().numpy())
             # self.lane_raw = cls_to_color(self.lane_map, 'lane')
             if SAVE_RESULT_MAP:
-                self.lane_map = cv2.resize(self.lane_map, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)
+                self.lane_map_ = cv2.resize(self.lane_map_, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)
+                self.lane_colormap = cv2.resize(self.lane_colormap, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)
+                Convert_labels_and_save(self.lane_map_,save_lane_masks_path,type="lane")
             else:
-                self.lane_map = cv2.resize(self.lane_map, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+                self.lane_map_ = cv2.resize(self.lane_map_, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
             
+            # if SAVE_RESULT_MAP:
+            #     cv2.imwrite(save_lane_masks_path,self.lane_map)
+            self.lane_colormap = cls_to_color(self.lane_colormap, 'lane')
             if SAVE_RESULT_MAP:
-                cv2.imwrite(save_lane_masks_path,self.lane_map)
-            self.lane_map = cls_to_color(self.lane_map, 'lane')
-            if SAVE_RESULT_MAP:
-                cv2.imwrite(save_lane_colormaps_path,self.lane_map)
+                cv2.imwrite(save_lane_colormaps_path,self.lane_colormap)
 
-            img[self.lane_map != 0] = img[self.lane_map != 0] * 0.5 + self.lane_map[self.lane_map != 0] * 0.5
+            img[self.lane_colormap != 0] = img[self.lane_colormap != 0] * 0.5 + self.lane_colormap[self.lane_colormap != 0] * 0.5
         if self.seg_map is not None:
             self.seg_map = np.squeeze(self.seg_map.detach().cpu().numpy())
             self.seg_map = cv2.resize(self.seg_map, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
             self.seg_map = cls_to_color(self.seg_map, 'seg')
             img[self.seg_map != 0] = img[self.seg_map != 0] * 0.5 + self.seg_map[self.seg_map != 0] * 0.5
-        return img, self.drive_map, self.lane_map
+        return img, self.drive_colormap, self.lane_colormap
 
     def verbose(self):
         """Return log string for each task."""
