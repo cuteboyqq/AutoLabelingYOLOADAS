@@ -282,6 +282,7 @@ class Results(SimpleClass):
         '''
         save YOLO-ADAS model infer drivable/ lane map result
         '''
+        SAVE_RESULT_DRI_MAP = True
         SAVE_RESULT_MAP = True
         if SAVE_RESULT_MAP:
             save_drivable_colormaps_dir = "/home/ali/Projects/datasets/BDD100K_test/labels/drivable/colormaps"
@@ -309,20 +310,21 @@ class Results(SimpleClass):
             img = cv2.resize(img, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)
 
         if self.drive_map is not None:
-            self.drive_map_ = np.squeeze(self.drive_map.detach().cpu().numpy())
+            if SAVE_RESULT_DRI_MAP:
+                self.drive_map_ = np.squeeze(self.drive_map.detach().cpu().numpy())
             self.drive_colormap = np.squeeze(self.drive_map.detach().cpu().numpy())
             # self.drive_raw = cls_to_color(self.drive_map, 'drive')
-            if SAVE_RESULT_MAP:
+            if SAVE_RESULT_DRI_MAP:
                 self.drive_map_ = cv2.resize(self.drive_map_, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST) 
-                self.drive_colormap = cv2.resize(self.drive_colormap, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)      
                 Convert_labels_and_save(self.drive_map_,save_drivable_masks_path,type="drivable")
-            else:
-                self.drive_map_ = cv2.resize(self.drive_map_, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+            self.drive_colormap = cv2.resize(self.drive_colormap, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)    
+            # else:
+            #     self.drive_map_ = cv2.resize(self.drive_map_, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
             
             # if SAVE_RESULT_MAP:
             #     cv2.imwrite(save_drivable_masks_path,self.drive_map)
             self.drive_colormap = cls_to_color(self.drive_colormap, 'drive')
-            if SAVE_RESULT_MAP:
+            if SAVE_RESULT_DRI_MAP:
                 cv2.imwrite(save_drivable_colormaps_path,self.drive_colormap)
 
             img[self.drive_colormap != 0] = img[self.drive_colormap != 0] * 0.5 + self.drive_colormap[self.drive_colormap != 0] * 0.5
