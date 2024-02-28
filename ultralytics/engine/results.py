@@ -285,10 +285,15 @@ class Results(SimpleClass):
         SAVE_RESULT_DRI_MAP = True
         SAVE_RESULT_MAP = True
         if SAVE_RESULT_MAP:
-            save_drivable_colormaps_dir = "/home/ali/Projects/datasets/BDD100K_test/labels/drivable/colormaps"
-            save_drivable_masks_dir = "/home/ali/Projects/datasets/BDD100K_test/labels/drivable/masks"
-            save_lane_colormaps_dir = "/home/ali/Projects/datasets/BDD100K_test/labels/lane/colormaps"
-            save_lane_masks_dir = "/home/ali/Projects/datasets/BDD100K_test/labels/lane/masks"
+            DATASET_DIR = "/home/sv0-jnr330/ali/datasets/nuimages_test"
+            # save_drivable_colormaps_dir = "/home/sv0-jnr330/ali/datasets/BDD100K_test/labels/drivable/colormaps"
+            # save_drivable_masks_dir = "/home/sv0-jnr330/ali/datasets/BDD100K_test/labels/drivable/masks"
+            # save_lane_colormaps_dir = "/home/sv0-jnr330/ali/datasets/BDD100K_test/labels/lane/colormaps"
+            # save_lane_masks_dir = "/home/sv0-jnr330/ali/datasets/BDD100K_test/labels/lane/masks"
+            save_drivable_colormaps_dir = os.path.join(DATASET_DIR,"labels","drivable","colormaps")
+            save_drivable_masks_dir = os.path.join(DATASET_DIR,"labels","drivable","masks")
+            save_lane_colormaps_dir = os.path.join(DATASET_DIR,"labels","lane","colormaps")
+            save_lane_masks_dir = os.path.join(DATASET_DIR,"labels","lane","masks")
             # create save directory folder
             os.makedirs(save_drivable_colormaps_dir,exist_ok=True)
             os.makedirs(save_drivable_masks_dir,exist_ok=True)
@@ -317,9 +322,10 @@ class Results(SimpleClass):
             if SAVE_RESULT_DRI_MAP:
                 self.drive_map_ = cv2.resize(self.drive_map_, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST) 
                 Convert_labels_and_save(self.drive_map_,save_drivable_masks_path,type="drivable")
-            self.drive_colormap = cv2.resize(self.drive_colormap, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)    
-            # else:
-            #     self.drive_map_ = cv2.resize(self.drive_map_, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+            if SAVE_RESULT_DRI_MAP or SAVE_RESULT_MAP:
+                self.drive_colormap = cv2.resize(self.drive_colormap, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)    
+            else:
+                self.drive_colormap = cv2.resize(self.drive_colormap, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
             
             # if SAVE_RESULT_MAP:
             #     cv2.imwrite(save_drivable_masks_path,self.drive_map)
@@ -337,7 +343,7 @@ class Results(SimpleClass):
                 self.lane_colormap = cv2.resize(self.lane_colormap, (save_im_width, save_im_height), interpolation=cv2.INTER_NEAREST)
                 Convert_labels_and_save(self.lane_map_,save_lane_masks_path,type="lane")
             else:
-                self.lane_map_ = cv2.resize(self.lane_map_, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
+                self.lane_colormap = cv2.resize(self.lane_colormap, (img.shape[1], img.shape[0]), interpolation=cv2.INTER_NEAREST)
             
             # if SAVE_RESULT_MAP:
             #     cv2.imwrite(save_lane_masks_path,self.lane_map)
